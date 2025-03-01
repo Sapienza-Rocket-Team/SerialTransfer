@@ -1,7 +1,8 @@
 #pragma once
-#include "Arduino.h"
 #include "Packet.h"
 #include "Wire.h"
+
+#include <sys/_stdint.h>
 
 
 class I2CTransfer

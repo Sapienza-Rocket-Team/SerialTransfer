@@ -1,5 +1,7 @@
 #include "Packet.h"
+#include "pico/stdlib.h"
 
+#include <cstring>
 
 PacketCRC crc;
 
@@ -19,8 +21,6 @@ PacketCRC crc;
 */
 void Packet::begin(const configST& configs)
 {
-	debugPort    = configs.debugPort;
-	debug        = configs.debug;
 	callbacks    = configs.callbacks;
 	callbacksLen = configs.callbacksLen;
 	timeout 	 = configs.timeout;
@@ -42,10 +42,8 @@ void Packet::begin(const configST& configs)
  -------
   * void
 */
-void Packet::begin(const bool& _debug, Stream& _debugPort, const uint32_t& _timeout)
+void Packet::begin(const uint32_t& _timeout)
 {
-	debugPort = &_debugPort;
-	debug     = _debug;
 	timeout   = _timeout;
 }
 
@@ -118,15 +116,13 @@ uint8_t Packet::constructPacket(const uint16_t& messageLen, const uint8_t& packe
 
 uint8_t Packet::parse(const uint8_t& recChar, const bool& valid)
 {
-	bool packet_fresh = (packetStart == 0) || ((millis() - packetStart) < timeout);
+	bool packet_fresh = (packetStart == 0) || ((time_us_32() / 1000 - packetStart) < timeout);
 
 	if(!packet_fresh) //packet is stale, start over.
 	{
-		if (debug)
-			debugPort->println("ERROR: STALE PACKET");
 
 		bytesRead   = 0;
-		state       = find_start_byte;
+		state       = fsm::find_start_byte;
 		status      = STALE_PACKET_ERROR;
 		packetStart = 0;
 
@@ -137,47 +133,44 @@ uint8_t Packet::parse(const uint8_t& recChar, const bool& valid)
 	{
 		switch (state)
 		{
-		case find_start_byte: /////////////////////////////////////////
+		case fsm::find_start_byte: /////////////////////////////////////////
 		{
 			if (recChar == START_BYTE)
 			{
-				state       = find_id_byte;
-				packetStart = millis();	//start the timer
+				state       = fsm::find_id_byte;
+				packetStart = time_us_32() / 1000;	//start the timer
 			}
 
 			break;
 		}
 
-		case find_id_byte: ////////////////////////////////////////////
+		case fsm::find_id_byte: ////////////////////////////////////////////
 		{
 			idByte = recChar;
-			state  = find_overhead_byte;
+			state  = fsm::find_overhead_byte;
 			break;
 		}
 
-		case find_overhead_byte: //////////////////////////////////////
+		case fsm::find_overhead_byte: //////////////////////////////////////
 		{
 			recOverheadByte = recChar;
-			state           = find_payload_len;
+			state           = fsm::find_payload_len;
 			break;
 		}
 
-		case find_payload_len: ////////////////////////////////////////
+		case fsm::find_payload_len: ////////////////////////////////////////
 		{
 			if ((recChar > 0) && (recChar <= MAX_PACKET_SIZE))
 			{
 				bytesToRec = recChar;
 				payIndex   = 0;
-				state      = find_payload;
+				state      = fsm::find_payload;
 			}
 			else
 			{
 				bytesRead = 0;
-				state     = find_start_byte;
+				state     = fsm::find_start_byte;
 				status    = PAYLOAD_ERROR;
-
-				if (debug)
-					debugPort->println("ERROR: PAYLOAD_ERROR");
 
 				reset();
 				return bytesRead;
@@ -185,7 +178,7 @@ uint8_t Packet::parse(const uint8_t& recChar, const bool& valid)
 			break;
 		}
 
-		case find_payload: ////////////////////////////////////////////
+		case fsm::find_payload: ////////////////////////////////////////////
 		{
 			if (payIndex < bytesToRec)
 			{
@@ -193,25 +186,22 @@ uint8_t Packet::parse(const uint8_t& recChar, const bool& valid)
 				payIndex++;
 
 				if (payIndex == bytesToRec)
-					state    = find_crc;
+					state    = fsm::find_crc;
 			}
 			break;
 		}
 
-		case find_crc: ///////////////////////////////////////////
+		case fsm::find_crc: ///////////////////////////////////////////
 		{
 			uint8_t calcCrc = crc.calculate(rxBuff, bytesToRec);
 
 			if (calcCrc == recChar)
-				state = find_end_byte;
+				state = fsm::find_end_byte;
 			else
 			{
 				bytesRead = 0;
-				state     = find_start_byte;
+				state     = fsm::find_start_byte;
 				status    = CRC_ERROR;
-
-				if (debug)
-					debugPort->println("ERROR: CRC_ERROR");
 
 				reset();
 				return bytesRead;
@@ -220,9 +210,9 @@ uint8_t Packet::parse(const uint8_t& recChar, const bool& valid)
 			break;
 		}
 
-		case find_end_byte: ///////////////////////////////////////////
+		case fsm::find_end_byte: ///////////////////////////////////////////
 		{
-			state = find_start_byte;
+			state = fsm::find_start_byte;
 
 			if (recChar == STOP_BYTE)
 			{
@@ -234,11 +224,7 @@ uint8_t Packet::parse(const uint8_t& recChar, const bool& valid)
 				{
 					if (idByte < callbacksLen)
 						callbacks[idByte]();
-					else if (debug)
-					{
-						debugPort->print(F("ERROR: No callback available for packet ID "));
-						debugPort->println(idByte);
-					}
+
 				}
 				packetStart = 0;	// reset the timer
 				return bytesToRec;
@@ -247,9 +233,6 @@ uint8_t Packet::parse(const uint8_t& recChar, const bool& valid)
 			bytesRead = 0;
 			status    = STOP_BYTE_ERROR;
 
-			if (debug)
-				debugPort->println("ERROR: STOP_BYTE_ERROR");
-
 			reset();
 			return bytesRead;
 			break;
@@ -257,15 +240,9 @@ uint8_t Packet::parse(const uint8_t& recChar, const bool& valid)
 
 		default:
 		{
-			if (debug)
-			{
-				debugPort->print("ERROR: Undefined state ");
-				debugPort->println(state);
-			}
-
 			reset();
 			bytesRead = 0;
-			state     = find_start_byte;
+			state     = fsm::find_start_byte;
 			break;
 		}
 		}

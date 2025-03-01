@@ -1,6 +1,6 @@
 #pragma once
-#include "Arduino.h"
 #include "Packet.h"
+#include "pico/stdlib.h"
 
 
 class SerialTransfer
@@ -11,8 +11,8 @@ class SerialTransfer
 	int8_t  status    = 0;
 
 
-	void    begin(Stream& _port, const configST configs);
-	void    begin(Stream& _port, const bool _debug = true, Stream& _debugPort = Serial, uint32_t _timeout = DEFAULT_TIMEOUT);
+	void    begin(uart_inst_t* _port, const configST configs);
+	void    begin(uart_inst_t* _port, uint32_t _timeout = DEFAULT_TIMEOUT);
 	uint8_t sendData(const uint16_t& messageLen, const uint8_t packetID = 0);
 	uint8_t available();
 	bool    tick();
@@ -97,6 +97,6 @@ class SerialTransfer
 
 
   private: // <<---------------------------------------//private
-	Stream* port;
+	uart_inst_t* port;
 	uint32_t timeout;
 };

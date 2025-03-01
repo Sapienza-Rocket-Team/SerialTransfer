@@ -12,8 +12,9 @@
 */
 
 #pragma once
-#include "Arduino.h"
 #include "PacketCRC.h"
+
+#include <sys/_stdint.h>
 
 
 typedef void (*functionPtr)();
@@ -39,9 +40,7 @@ const uint8_t DEFAULT_TIMEOUT = 50;
 
 struct configST
 {
-	Stream*            debugPort    = &Serial;
-	bool               debug        = true;
-	const functionPtr* callbacks    = NULL;
+	const functionPtr* callbacks    = nullptr;
 	uint8_t            callbacksLen = 0;
 	uint32_t           timeout      = __UINT32_MAX__;
 };
@@ -60,7 +59,7 @@ class Packet
 
 
 	void    begin(const configST& configs);
-	void    begin(const bool& _debug = true, Stream& _debugPort = Serial, const uint32_t& _timeout = DEFAULT_TIMEOUT);
+	void    begin(const uint32_t& _timeout = DEFAULT_TIMEOUT);
 	uint8_t constructPacket(const uint16_t& messageLen, const uint8_t& packetID = 0);
 	uint8_t parse(const uint8_t& recChar, const bool& valid = true);
 	uint8_t currentPacketID();
@@ -152,7 +151,7 @@ class Packet
 
 
   private: // <<---------------------------------------//private
-	enum fsm
+	enum class fsm
 	{
 		find_start_byte,
 		find_id_byte,
@@ -162,13 +161,10 @@ class Packet
 		find_crc,
 		find_end_byte
 	};
-	fsm state = find_start_byte;
+	fsm state = fsm::find_start_byte;
 
-	const functionPtr* callbacks    = NULL;
+	const functionPtr* callbacks    = nullptr;
 	uint8_t            callbacksLen = 0;
-
-	Stream* debugPort;
-	bool    debug = false;
 
 	uint8_t bytesToRec      = 0;
 	uint8_t payIndex        = 0;

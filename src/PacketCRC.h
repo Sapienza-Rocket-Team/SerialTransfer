@@ -1,6 +1,6 @@
 #pragma once
-#include "Arduino.h"
-
+#include <cmath>
+#include <sys/_stdint.h>
 
 class PacketCRC
 {
@@ -32,20 +32,7 @@ class PacketCRC
 					curr <<= 1;
 			}
 
-			csTable[i] = (byte)curr;
-		}
-	}
-
-	void printTable()
-	{
-		for (uint16_t i = 0; i < tableLen_; i++)
-		{
-			Serial.print(csTable[i], HEX);
-
-			if ((i + 1) % 16)
-				Serial.print(' ');
-			else
-				Serial.println();
+			csTable[i] = (uint8_t)curr;
 		}
 	}
 

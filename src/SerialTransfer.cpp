@@ -1,4 +1,5 @@
 #include "SerialTransfer.h"
+#include "pico/stdlib.h"
 
 
 /*
@@ -15,9 +16,9 @@
  -------
   * void
 */
-void SerialTransfer::begin(Stream& _port, const configST configs)
+void SerialTransfer::begin(uart_inst_t* _port, const configST configs)
 {
-	port = &_port;
+	port = _port;
 	packet.begin(configs);
 }
 
@@ -36,11 +37,11 @@ void SerialTransfer::begin(Stream& _port, const configST configs)
  -------
   * void
 */
-void SerialTransfer::begin(Stream& _port, const bool _debug, Stream& _debugPort, uint32_t _timeout)
+void SerialTransfer::begin(uart_inst_t* _port, uint32_t _timeout)
 {
-	port    = &_port;
+	port    = _port;
 	timeout = _timeout;
-	packet.begin(_debug, _debugPort, _timeout);
+	packet.begin(_timeout);
 }
 
 
@@ -63,9 +64,9 @@ uint8_t SerialTransfer::sendData(const uint16_t& messageLen, const uint8_t packe
 	uint8_t numBytesIncl;
 
 	numBytesIncl = packet.constructPacket(messageLen, packetID);
-	port->write(packet.preamble, sizeof(packet.preamble));
-	port->write(packet.txBuff, numBytesIncl);
-	port->write(packet.postamble, sizeof(packet.postamble));
+	uart_write_blocking(port, packet.preamble, sizeof(packet.preamble));
+	uart_write_blocking(port, packet.txBuff, numBytesIncl);
+	uart_write_blocking(port, packet.postamble, sizeof(packet.postamble));
 
 	return numBytesIncl;
 }
@@ -89,13 +90,13 @@ uint8_t SerialTransfer::available()
 	bool    valid   = false;
 	uint8_t recChar = 0xFF;
 
-	if (port->available())
+	if (uart_is_readable(port))
 	{
 		valid = true;
 
-		while (port->available())
+		while (uart_is_readable(port))
 		{
-			recChar = port->read();
+			recChar = uart_getc(port);
 
 			bytesRead = packet.parse(recChar, valid);
 			status    = packet.status;
@@ -178,8 +179,8 @@ uint8_t SerialTransfer::currentPacketID()
 */
 void SerialTransfer::reset()
 {
-	while (port->available())
-		port->read();
+	while (uart_is_readable(port))
+		uart_getc(port);
 
 	packet.reset();
 	status = packet.status;

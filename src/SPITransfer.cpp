@@ -1,4 +1,3 @@
-#include "Arduino.h"
 /* UNCOMMENT FOR USAGE
 #if not(defined(MBED_H) || defined(__SAM3X8E__) || defined(DISABLE_SPI_SERIALTRANSFER)) // These boards are/will not be supported by SPITransfer.h
 
