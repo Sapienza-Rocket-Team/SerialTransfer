@@ -11,7 +11,7 @@ project( SerialTransfer CXX C ASM )
 pico_sdk_init()
 
 # base options
-include_directories( "src" )
+set( SERIAL_TRANSFER_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/include" )
 
 # load targets
 include( "src/library.cmake" )
