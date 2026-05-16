@@ -1,6 +1,8 @@
 #include "SerialTransfer.h"
 #include "pico/stdlib.h"
 
+#include <cstdio>
+
 
 /*
  void SerialTransfer::begin(Stream &_port, configST configs)
@@ -16,7 +18,7 @@
  -------
   * void
 */
-void SerialTransfer::begin(uart_inst_t* _port, const configST configs)
+void SerialTransfer::begin(i2c_inst_t* _port, const configST configs)
 {
 	port = _port;
 	packet.begin(configs);
@@ -37,13 +39,12 @@ void SerialTransfer::begin(uart_inst_t* _port, const configST configs)
  -------
   * void
 */
-void SerialTransfer::begin(uart_inst_t* _port, uint32_t _timeout)
+void SerialTransfer::begin(i2c_inst_t* _port, uint32_t _timeout)
 {
 	port    = _port;
 	timeout = _timeout;
 	packet.begin(_timeout);
 }
-
 
 /*
  uint8_t SerialTransfer::sendData(const uint16_t &messageLen, const uint8_t packetID)
@@ -59,17 +60,34 @@ void SerialTransfer::begin(uart_inst_t* _port, uint32_t _timeout)
  -------
   * uint8_t numBytesIncl - Number of payload bytes included in packet
 */
-uint8_t SerialTransfer::sendData(const uint16_t& messageLen, const uint8_t packetID)
+uint8_t SerialTransfer::sendData(const uint16_t& messageLen, const u32 address, const uint8_t packetID)
 {
 	uint8_t numBytesIncl;
 
 	numBytesIncl = packet.constructPacket(messageLen, packetID);
-	uart_write_blocking(port, packet.preamble, sizeof(packet.preamble));
-	uart_write_blocking(port, packet.txBuff, numBytesIncl);
-	uart_write_blocking(port, packet.postamble, sizeof(packet.postamble));
+	i2c_write_blocking(port, address, packet.preamble, sizeof(packet.preamble), false);
+	i2c_write_blocking(port, address, packet.txBuff, numBytesIncl, false);
+	i2c_write_blocking(port, address, packet.postamble, sizeof(packet.postamble), false);
 
 	return numBytesIncl;
 }
+
+uint8_t* SerialTransfer::recvData(const u32 RXaddr, uint8_t length)
+{
+	const uint8_t maskBuff = MASK ;
+	i2c_write_raw_blocking( port, &maskBuff, length );
+
+	size_t res = 0;
+	delayI2C( 1 );
+	while ( res < i2c_get_read_available( port ) )
+	{
+		res = i2c_get_read_available( port );
+	}
+
+	i2c_read_raw_blocking( port, packet.rxBuff, length );
+	return packet.rxBuff;
+}
+
 
 
 /*
@@ -85,12 +103,15 @@ uint8_t SerialTransfer::sendData(const uint16_t& messageLen, const uint8_t packe
  -------
   * uint8_t bytesRead - Num bytes in RX buffer
 */
-uint8_t SerialTransfer::available()
+/* uint8_t SerialTransfer::available()
 {
 	bool    valid   = false;
 	uint8_t recChar = 0xFF;
 
-	if (uart_is_readable(port))
+	uint8_t src[ 32 ];
+	i2c_read_raw_blocking(port, src,
+
+	if ()
 	{
 		valid = true;
 
@@ -121,7 +142,7 @@ uint8_t SerialTransfer::available()
 
 	return bytesRead;
 }
-
+*/
 
 /*
  bool SerialTransfer::tick()
@@ -137,13 +158,6 @@ uint8_t SerialTransfer::available()
  -------
   * bool - Whether or not a full packet has been parsed
 */
-bool SerialTransfer::tick()
-{
-	if (available())
-		return true;
-
-	return false;
-}
 
 
 /*
@@ -179,9 +193,7 @@ uint8_t SerialTransfer::currentPacketID()
 */
 void SerialTransfer::reset()
 {
-	while (uart_is_readable(port))
-		uart_getc(port);
-
 	packet.reset();
 	status = packet.status;
 }
+

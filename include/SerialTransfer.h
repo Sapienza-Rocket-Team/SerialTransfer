@@ -2,7 +2,10 @@
 #include "Packet.h"
 #include "pico/stdlib.h"
 
+#include <hardware/i2c.h>
+#include <typing.hpp>
 
+extern void delayI2C ( uint32_t ms );
 class SerialTransfer
 {
   public: // <<---------------------------------------//public
@@ -10,15 +13,15 @@ class SerialTransfer
 	uint8_t bytesRead = 0;
 	int8_t  status    = 0;
 
+	static constexpr int32_t MASK { 0xFF };
 
-	void    begin(uart_inst_t* _port, const configST configs);
-	void    begin(uart_inst_t* _port, uint32_t _timeout = DEFAULT_TIMEOUT);
-	uint8_t sendData(const uint16_t& messageLen, const uint8_t packetID = 0);
-	uint8_t available();
-	bool    tick();
+	void    begin(i2c_inst_t* _port, const configST configs);
+	void    begin(i2c_inst_t* _port, uint32_t _timeout = DEFAULT_TIMEOUT);
+	uint8_t sendData(const uint16_t& messageLen, const u32 address, const uint8_t packetID = 0);
+	//uint8_t available();
+	uint8_t* recvData(const u32 RXaddr, uint8_t length);
 	uint8_t currentPacketID();
 	void    reset();
-
 
 	/*
 	 uint16_t SerialTransfer::txObj(const T &val, const uint16_t &index=0, const uint16_t &len=sizeof(T))
@@ -97,6 +100,7 @@ class SerialTransfer
 
 
   private: // <<---------------------------------------//private
-	uart_inst_t* port;
+	i2c_inst_t* port;
 	uint32_t timeout;
 };
+

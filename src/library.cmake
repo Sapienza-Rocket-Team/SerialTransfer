@@ -22,4 +22,5 @@ target_link_libraries( SerialTransfer
     PUBLIC
         pico_stdlib
         hardware_spi
+		hardware_i2c
 )
