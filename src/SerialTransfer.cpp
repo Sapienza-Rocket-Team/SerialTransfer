@@ -72,10 +72,10 @@ uint8_t SerialTransfer::sendData(const uint16_t& messageLen, const u32 address, 
 	return numBytesIncl;
 }
 
-uint8_t* SerialTransfer::recvData(const u32 RXaddr, uint8_t length)
+uint8_t* SerialTransfer::recvData(const uint8_t addr, uint8_t length)
 {
 	const uint8_t maskBuff = MASK ;
-	i2c_write_blocking( port, RXaddr, &maskBuff, sizeof( maskBuff ), false );
+	i2c_write_blocking( port, addr, &maskBuff, sizeof( maskBuff ), false );
 
 	size_t res = 0;
 	delayI2C( 1 );
@@ -84,7 +84,7 @@ uint8_t* SerialTransfer::recvData(const u32 RXaddr, uint8_t length)
 		res = i2c_get_read_available( port );
 	}
 
-	i2c_read_blocking( port, RXaddr, packet.rxBuff, length, false );
+	i2c_read_blocking( port, addr, packet.rxBuff, length, false );
 	return packet.rxBuff;
 }
 

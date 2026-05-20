@@ -19,7 +19,7 @@ class SerialTransfer
 	void    begin(i2c_inst_t* _port, uint32_t _timeout = DEFAULT_TIMEOUT);
 	uint8_t sendData(const uint16_t& messageLen, const u32 address, const uint8_t packetID = 0);
 	//uint8_t available();
-	uint8_t* recvData(const u32 RXaddr, uint8_t length);
+	uint8_t* recvData(const uint8_t addr, uint8_t length);
 	uint8_t currentPacketID();
 	void    reset();
 
