@@ -64,8 +64,8 @@ uint8_t SerialTransfer::sendData(const uint16_t& messageLen, const u32 address, 
 {
 
 	uint8_t numBytesIncl = packet.constructPacket(messageLen, packetID);
-	i2c_write_blocking(port, address, packet.preamble, sizeof(packet.preamble), false);
-	i2c_write_blocking(port, address, packet.txBuff, numBytesIncl, false);
+	i2c_write_blocking(port, address, packet.preamble, sizeof(packet.preamble), true);
+	i2c_write_blocking(port, address, packet.txBuff, numBytesIncl, true);
 	i2c_write_blocking(port, address, packet.postamble, sizeof(packet.postamble), false);
 
 	return numBytesIncl;
