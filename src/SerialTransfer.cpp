@@ -62,9 +62,8 @@ void SerialTransfer::begin(i2c_inst_t* _port, uint32_t _timeout)
 */
 uint8_t SerialTransfer::sendData(const uint16_t& messageLen, const u32 address, const uint8_t packetID)
 {
-	uint8_t numBytesIncl;
 
-	numBytesIncl = packet.constructPacket(messageLen, packetID);
+	uint8_t numBytesIncl = packet.constructPacket(messageLen, packetID);
 	i2c_write_blocking(port, address, packet.preamble, sizeof(packet.preamble), false);
 	i2c_write_blocking(port, address, packet.txBuff, numBytesIncl, false);
 	i2c_write_blocking(port, address, packet.postamble, sizeof(packet.postamble), false);
@@ -72,23 +71,10 @@ uint8_t SerialTransfer::sendData(const uint16_t& messageLen, const u32 address, 
 	return numBytesIncl;
 }
 
-uint8_t* SerialTransfer::recvData(const uint8_t addr, uint8_t length)
+int SerialTransfer::recvData(const uint8_t addr, uint8_t length)
 {
-	const uint8_t maskBuff = MASK ;
-	i2c_write_blocking( port, addr, &maskBuff, sizeof( maskBuff ), false );
-
-	size_t res = 0;
-	delayI2C( 1 );
-	while ( res < i2c_get_read_available( port ) )
-	{
-		res = i2c_get_read_available( port );
-	}
-
-	i2c_read_blocking( port, addr, packet.rxBuff, length, false );
-	return packet.rxBuff;
+	return i2c_read_blocking( port, addr, packet.rxBuff, length, false );
 }
-
-
 
 /*
  uint8_t SerialTransfer::available()
