@@ -13,12 +13,10 @@ class SerialTransfer
 	uint8_t bytesRead = 0;
 	int8_t  status    = 0;
 
-	static constexpr int32_t MASK { 0x00 }; // MASK is the I2C slave address - 7bit long
-
 	void    begin(i2c_inst_t* _port, const configST configs);
 	void    begin(i2c_inst_t* _port, uint32_t _timeout = DEFAULT_TIMEOUT);
 	uint8_t sendData(const uint16_t& messageLen, const u32 address, const uint8_t packetID = 0);
-	//uint8_t available();
+	uint8_t available();
 	int recvData(const uint8_t addr, uint8_t length);
 	uint8_t currentPacketID();
 	void    reset();

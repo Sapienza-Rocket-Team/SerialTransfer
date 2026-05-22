@@ -1,7 +1,7 @@
 #pragma once
 #include "Packet.h"
-#include "Wire.h"
 
+#include <hardware/i2c.h>
 #include <sys/_stdint.h>
 
 
@@ -9,21 +9,17 @@ class I2CTransfer
 {
   public: // <<---------------------------------------//public
 	Packet              packet;
-	static I2CTransfer* classToUse;
 	uint8_t             bytesRead = 0;
 	int8_t              status    = 0;
 
 
-	I2CTransfer()
-	{
-		classToUse = this;
-	};
-	void    begin(TwoWire& _port, const configST& configs);
-	void    begin(TwoWire& _port, const bool& _debug = true, Stream& _debugPort = Serial);
-	uint8_t sendData(const uint16_t& messageLen, const uint8_t& packetID = 0, const uint8_t& targetAddress = 0);
+	I2CTransfer() = default;
+	void    begin(i2c_inst_t* _port, const configST& configs);
+	void    begin(i2c_inst_t* _port, uint32_t _timeout = DEFAULT_TIMEOUT);
+	uint8_t sendData(const uint16_t& messageLen, const uint8_t& packetID = 0, uint8_t targetAddress = 0);
 	uint8_t currentPacketID();
 	void    reset();
-
+	void processData( uint8_t targetAddress = 0 );
 
 	/*
 	 uint16_t I2CTransfer::txObj(const T &val, const uint16_t &index=0, const uint16_t &len=sizeof(T))
@@ -105,8 +101,5 @@ class I2CTransfer
 
 
   private: // <<---------------------------------------//private
-	TwoWire* port;
-
-
-	static void processData();
+	i2c_inst_t* port;
 };
