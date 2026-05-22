@@ -2,8 +2,21 @@
 #include "pico/stdlib.h"
 
 #include <cstring>
+#include <typing.hpp>
 
 PacketCRC crc;
+
+struct PacketStruct
+{
+	const u8 startByte;
+	const u8 packetId;
+	const u8 COBS;
+	const u8 payloadSize;
+	const u8 CRC;
+	const u8 stopByte;
+};
+
+
 
 
 /*
@@ -19,6 +32,7 @@ PacketCRC crc;
  -------
   * void
 */
+
 void Packet::begin(const configST& configs)
 {
 	callbacks    = configs.callbacks;
@@ -47,6 +61,33 @@ void Packet::begin(const uint32_t& _timeout)
 	timeout   = _timeout;
 }
 
+/*
+
+auto ParseI2C ( uint8_t * src ) -> void {
+	uint8_t StartByte = src[0];
+	this.idByte = src[1];
+	uint8_t COBS = src[2];
+	uint8_t payloadSize = src[3];
+
+	if ( StartByte != 0x7e ) { return; }
+
+	int i = 2;
+	while ( src[i] != 0xFF )
+	{
+		i += COBS;
+		COBS = src[ i ];
+		src[ i ] = 0x7e;
+	}
+
+	int newIndex = ++payloadSize;
+	uint8_t CRC = src[ newIndex ];
+	uint8_t StopByte = src[ ++newIndex ];
+
+	uint8_t pcktargs[ payloadSize ];
+	memcpy( pcktargs, &src[ 4 ], payloadSize );
+
+}
+ */
 
 /*
  uint8_t Packet::constructPacket(const uint16_t& messageLen, const uint8_t& packetID)
@@ -272,7 +313,7 @@ uint8_t Packet::parse(const uint8_t& recChar, const bool& valid)
  -------
   * uint8_t - ID of the last parsed packet
 */
-uint8_t Packet::currentPacketID()
+uint8_t Packet::currentPacketID() const
 {
 	return idByte;
 }
@@ -418,4 +459,8 @@ void Packet::reset()
 
 	bytesRead   = 0;
 	packetStart = 0;
+}
+uint32_t Packet::getTimeout() const
+{
+	return timeout;
 }

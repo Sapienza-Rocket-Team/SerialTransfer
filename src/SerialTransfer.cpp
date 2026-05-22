@@ -1,7 +1,10 @@
 #include "SerialTransfer.h"
 #include "pico/stdlib.h"
+#include "Packet.h"
 
 #include <cstdio>
+#include <cstring>
+#include <sys/unistd.h>
 
 
 /*
@@ -64,9 +67,7 @@ uint8_t SerialTransfer::sendData(const uint16_t& messageLen, const u32 address, 
 {
 
 	uint8_t numBytesIncl = packet.constructPacket(messageLen, packetID);
-	i2c_write_blocking(port, address, packet.preamble, sizeof(packet.preamble), false);
 	i2c_write_blocking(port, address, packet.txBuff, numBytesIncl, false);
-	i2c_write_blocking(port, address, packet.postamble, sizeof(packet.postamble), false);
 
 	return numBytesIncl;
 }
@@ -89,32 +90,24 @@ int SerialTransfer::recvData(const uint8_t addr, uint8_t length)
  -------
   * uint8_t bytesRead - Num bytes in RX buffer
 */
-/* uint8_t SerialTransfer::available()
-{
+uint8_t SerialTransfer::available() {
 	bool    valid   = false;
 	uint8_t recChar = 0xFF;
 
-	uint8_t src[ 32 ];
-	i2c_read_raw_blocking(port, src,
+	uint8_t src[ 256 ];
+	int res;
 
-	if ()
-	{
-		valid = true;
-
-		while (uart_is_readable(port))
+	if ( (res = i2c_read_blocking(port, 0x10, src, 256, false)) ) {
+		valid  = true;
+		int i = 0;
+		while ( res > 0 )
 		{
-			recChar = uart_getc(port);
-
+			recChar = src[i];
 			bytesRead = packet.parse(recChar, valid);
-			status    = packet.status;
+			status = packet.status;
 
-			if (status != CONTINUE)
-			{
-				if (status < 0)
-					reset();
-
-				break;
-			}
+			i++;
+			res--;
 		}
 	}
 	else
@@ -128,7 +121,7 @@ int SerialTransfer::recvData(const uint8_t addr, uint8_t length)
 
 	return bytesRead;
 }
-*/
+
 
 /*
  bool SerialTransfer::tick()

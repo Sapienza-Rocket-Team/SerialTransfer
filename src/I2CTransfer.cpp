@@ -2,45 +2,44 @@
 
 
 /*
- void I2CTransfer::begin(TwoWire &_port, configST& configs)
+ void I2CTransfer::begin(i2c_inst_t &_port, configST& configs)
  Description:
  ------------
   * Advanced initializer for the I2CTransfer Class
  Inputs:
  -------
-  * const TwoWire &_port - I2C port to communicate over
+  * const i2c_inst_t &_port - I2C port to communicate over
   * const configST& configs - Struct that holds config
   values for all possible initialization parameters
  Return:
  -------
   * void
 */
-void I2CTransfer::begin(TwoWire& _port, const configST& configs)
+void I2CTransfer::begin(i2c_inst_t* _port, const configST& configs)
 {
-	port = &_port;
-	port->onReceive((void (*)(int))processData);
+	port = _port;
 	packet.begin(configs);
 }
 
 
 /*
- void I2CTransfer::begin(TwoWire &_port, const bool& _debug, Stream &_debugPort)
+ void I2CTransfer::begin(i2c_inst_t &_port, const bool& _debug, Stream &_debugPort)
  Description:
  ------------
   * Simple initializer for the SerialTransfer Class
  Inputs:
  -------
-  * const TwoWire &_port - I2C port to communicate over
+  * const i2c_inst_t &_port - I2C port to communicate over
   * const bool& _debug - Whether or not to print error messages
   * const Stream &_debugPort - Serial port to print error messages
  Return:
  -------
   * void
 */
-void I2CTransfer::begin(TwoWire& _port, const bool& _debug, Stream& _debugPort)
+void I2CTransfer::begin(i2c_inst_t* _port, uint32_t _timeout)
 {
-	port = &_port;
-	packet.begin(_debug, _debugPort);
+	port = _port;
+	packet.begin(_timeout);
 }
 
 
@@ -60,17 +59,13 @@ void I2CTransfer::begin(TwoWire& _port, const bool& _debug, Stream& _debugPort)
  -------
   * uint8_t numBytesIncl - Number of payload bytes included in packet
 */
-uint8_t I2CTransfer::sendData(const uint16_t& messageLen, const uint8_t& packetID, const uint8_t& targetAddress)
+uint8_t I2CTransfer::sendData(const uint16_t& messageLen, const uint8_t& packetID, const uint8_t targetAddress)
 {
-	uint8_t numBytesIncl;
+	uint8_t numBytesIncl = packet.constructPacket(messageLen, packetID);
 
-	numBytesIncl = packet.constructPacket(messageLen, packetID);
-
-	port->beginTransmission(targetAddress);
-	port->write(packet.preamble, sizeof(packet.preamble));
-	port->write(packet.txBuff, numBytesIncl);
-	port->write(packet.postamble, sizeof(packet.postamble));
-	port->endTransmission();
+	i2c_write_burst_blocking( port, targetAddress, packet.preamble, sizeof( packet.preamble ) );
+	i2c_write_burst_blocking( port, targetAddress, packet.txBuff, numBytesIncl );
+	i2c_write_burst_blocking( port, targetAddress, packet.postamble, sizeof( packet.postamble ) );
 
 	return numBytesIncl;
 }
@@ -89,21 +84,29 @@ uint8_t I2CTransfer::sendData(const uint16_t& messageLen, const uint8_t& packetI
  -------
   * void
 */
-void I2CTransfer::processData()
+void I2CTransfer::processData( const uint8_t targetAddress )
 {
 	uint8_t recChar;
-	classToUse->bytesRead = 0;
+	bytesRead = 0;
+	int res;
 
-	while (classToUse->port->available())
+	while ( true )
 	{
-		recChar               = classToUse->port->read();
-		classToUse->bytesRead = classToUse->packet.parse(recChar);
-		classToUse->status    = classToUse->packet.status;
-		
-		if (classToUse->status != CONTINUE)
+		res = i2c_read_timeout_us( port, targetAddress, &recChar, 1, false, packet.getTimeout() );
+		if ( res == packet.getTimeout() )
 		{
-			if (classToUse->status < 0)
-				classToUse->reset();
+			status = packet.status = STALE_PACKET_ERROR;
+		}
+		else
+		{
+			bytesRead = packet.parse(recChar);
+			status    = packet.status;
+		}
+
+		if (status != CONTINUE)
+		{
+			if (status < 0)
+				reset();
 
 			break;
 		}
@@ -147,6 +150,3 @@ void I2CTransfer::reset()
 	packet.reset();
 	status = packet.status;
 }
-
-
-I2CTransfer* I2CTransfer::classToUse = NULL;

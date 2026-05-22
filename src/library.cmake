@@ -6,8 +6,10 @@ add_library( SerialTransfer STATIC
     "${SERIAL_TRANSFER_DIR}/Packet.cpp"
     "${SERIAL_TRANSFER_INCLUDE_DIR}/Packet.h"
     "${SERIAL_TRANSFER_INCLUDE_DIR}/PacketCRC.h"
-    "${SERIAL_TRANSFER_DIR}/SerialTransfer.cpp"
-    "${SERIAL_TRANSFER_INCLUDE_DIR}/SerialTransfer.h"
+	"${SERIAL_TRANSFER_DIR}/SerialTransfer.cpp"
+	"${SERIAL_TRANSFER_INCLUDE_DIR}/SerialTransfer.h"
+	"${SERIAL_TRANSFER_DIR}/I2CTransfer.cpp"
+	"${SERIAL_TRANSFER_INCLUDE_DIR}/I2CTransfer.h"
 )
 
 add_library( SerialTransfer::SerialTransfer ALIAS SerialTransfer )

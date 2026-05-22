@@ -9,6 +9,8 @@
 |      | |      | |______|___________________________________________________COBS Overhead byte
 |      | |______|____________________________________________________________Packet ID (0 by default)
 |______|_____________________________________________________________________Start byte (constant)
+
+
 */
 
 #pragma once
@@ -62,8 +64,9 @@ class Packet
 	void    begin(const uint32_t& _timeout = DEFAULT_TIMEOUT);
 	uint8_t constructPacket(const uint16_t& messageLen, const uint8_t& packetID = 0);
 	uint8_t parse(const uint8_t& recChar, const bool& valid = true);
-	uint8_t currentPacketID();
+	uint8_t currentPacketID() const;
 	void    reset();
+	uint32_t getTimeout() const;
 
 
 	/*
