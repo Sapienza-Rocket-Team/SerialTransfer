@@ -1,5 +1,7 @@
 #include "I2CTransfer.h"
 
+#include <cstring>
+
 
 /*
  void I2CTransfer::begin(i2c_inst_t &_port, configST& configs)
@@ -62,10 +64,13 @@ void I2CTransfer::begin(i2c_inst_t* _port, uint32_t _timeout)
 uint8_t I2CTransfer::sendData(const uint16_t& messageLen, const uint8_t& packetID, const uint8_t targetAddress)
 {
 	uint8_t numBytesIncl = packet.constructPacket(messageLen, packetID);
+	static uint8_t temp [ sizeof(Packet::preamble) + 254 + sizeof(Packet::postamble) ];
 
-	i2c_write_burst_blocking( port, targetAddress, packet.preamble, sizeof( packet.preamble ) );
-	i2c_write_burst_blocking( port, targetAddress, packet.txBuff, numBytesIncl );
-	i2c_write_burst_blocking( port, targetAddress, packet.postamble, sizeof( packet.postamble ) );
+	memcpy( temp, packet.preamble, sizeof( Packet::preamble ) );
+	memcpy( temp, packet.txBuff, numBytesIncl );
+	memcpy( temp, packet.postamble, sizeof( Packet::postamble ) );
+
+	i2c_write_blocking( port, targetAddress, temp , sizeof( Packet::preamble ) + numBytesIncl + sizeof( Packet::postamble ), false );
 
 	return numBytesIncl;
 }
@@ -93,7 +98,7 @@ void I2CTransfer::processData( const uint8_t targetAddress )
 	while ( true )
 	{
 		res = i2c_read_timeout_us( port, targetAddress, &recChar, 1, false, packet.getTimeout() );
-		if ( res == packet.getTimeout() )
+		if ( res == PICO_ERROR_TIMEOUT )
 		{
 			status = packet.status = STALE_PACKET_ERROR;
 		}
