@@ -63,12 +63,14 @@ void I2CTransfer::begin(i2c_inst_t* _port, uint32_t _timeout)
 */
 uint8_t I2CTransfer::sendData(const uint16_t& messageLen, const uint8_t& packetID, const uint8_t targetAddress)
 {
+	// TODO: check if actually full packet.TxBuffer
 	uint8_t numBytesIncl = packet.constructPacket(messageLen, packetID);
-	static uint8_t temp [ sizeof(Packet::preamble) + 254 + sizeof(Packet::postamble) ];
+
+	uint8_t temp[PREAMBLE_SIZE + numBytesIncl + PREAMBLE_SIZE];
 
 	memcpy( temp, packet.preamble, sizeof( Packet::preamble ) );
-	memcpy( temp, packet.txBuff, numBytesIncl );
-	memcpy( temp, packet.postamble, sizeof( Packet::postamble ) );
+	memcpy( temp + sizeof( Packet::preamble ), packet.txBuff, numBytesIncl );
+	memcpy( temp + numBytesIncl + sizeof( Packet::preamble ), packet.postamble, sizeof( Packet::postamble ) );
 
 	i2c_write_blocking( port, targetAddress, temp , sizeof( Packet::preamble ) + numBytesIncl + sizeof( Packet::postamble ), false );
 

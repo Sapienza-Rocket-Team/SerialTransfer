@@ -87,7 +87,7 @@ class Packet
 
 	 Return:
 	 -------
-	  * uint16_t maxIndex - uint16_t maxIndex - Index of the transmit buffer (txBuff) that directly follows the bytes processed
+	  * uint16_t maxIndex - Index of the transmit buffer (txBuff) that directly follows the bytes processed
 	  by the calling of this member function
 	*/
 	template <typename T>
