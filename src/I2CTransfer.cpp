@@ -32,8 +32,8 @@ void I2CTransfer::begin(i2c_inst_t* _port, const configST& configs)
  Inputs:
  -------
   * const i2c_inst_t &_port - I2C port to communicate over
-  * const bool& _debug - Whether or not to print error messages
-  * const Stream &_debugPort - Serial port to print error messages
+  * const uint32_t& _timeout - Number of ms to wait before
+  declaring packet parsing timeout
  Return:
  -------
   * void

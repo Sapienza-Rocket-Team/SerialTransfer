@@ -35,7 +35,7 @@ const uint8_t STOP_BYTE  = 0x81;
 
 const uint8_t PREAMBLE_SIZE   = 4;
 const uint8_t POSTAMBLE_SIZE  = 2;
-const uint8_t MAX_PACKET_SIZE = 0xFE; // Maximum allowed payload bytes per packet
+const uint8_t MAX_PACKET_SIZE = 249; // maximum considering LoRa RAM size (255B), preamble and postamble size (6B)
 
 const uint8_t DEFAULT_TIMEOUT = 50;
 

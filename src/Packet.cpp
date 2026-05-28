@@ -48,8 +48,6 @@ void Packet::begin(const configST& configs)
   * Simple initializer for the Packet Class
  Inputs:
  -------
-  * const bool& _debug - Whether or not to print error messages
-  * Stream &_debugPort - Serial port to print error messages
   * const uint32_t& _timeout - Number of ms to wait before
   declaring packet parsing timeout
  Return:
