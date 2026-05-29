@@ -1,5 +1,6 @@
 #include "I2CTransfer.h"
 
+#include <cstdio>
 #include <cstring>
 
 
@@ -65,16 +66,16 @@ uint8_t I2CTransfer::sendData(const uint16_t& messageLen, const uint8_t& packetI
 {
 	// TODO: check if actually full packet.TxBuffer
 	uint8_t numBytesIncl = packet.constructPacket(messageLen, packetID);
-
 	uint8_t temp[PREAMBLE_SIZE + numBytesIncl + PREAMBLE_SIZE];
 
 	memcpy( temp, packet.preamble, sizeof( Packet::preamble ) );
 	memcpy( temp + sizeof( Packet::preamble ), packet.txBuff, numBytesIncl );
 	memcpy( temp + numBytesIncl + sizeof( Packet::preamble ), packet.postamble, sizeof( Packet::postamble ) );
 
-	i2c_write_blocking( port, targetAddress, temp , sizeof( Packet::preamble ) + numBytesIncl + sizeof( Packet::postamble ), false );
+	int res = i2c_write_blocking( port, targetAddress, temp , sizeof( Packet::preamble ) + numBytesIncl + sizeof( Packet::postamble ), false );
+	printf( "target addr %u\n", targetAddress);
 
-	return numBytesIncl;
+	return res;
 }
 
 
