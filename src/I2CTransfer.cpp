@@ -73,7 +73,6 @@ uint8_t I2CTransfer::sendData(const uint16_t& messageLen, const uint8_t& packetI
 	memcpy( temp + numBytesIncl + sizeof( Packet::preamble ), packet.postamble, sizeof( Packet::postamble ) );
 
 	int res = i2c_write_blocking( port, targetAddress, temp , sizeof( Packet::preamble ) + numBytesIncl + sizeof( Packet::postamble ), false );
-	printf( "target addr %u\n", targetAddress);
 
 	return res;
 }
